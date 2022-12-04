@@ -1,0 +1,23 @@
+{
+  "name": "telegram-to-todo",
+  "version": "0.0.1",
+  "description": "Telegram bot that receives messages and sends them to LucaTNT/microsoft-todo-adder",
+  "main": "./index.js",
+
+  "author": "Luca Zorzi <luca@lucazorzi.net>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.12"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.60.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LucaTNT/telegram-to-todo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LucaTNT/telegram-to-todo/issues"
+  },
+  "homepage": "https://github.com/LucaTNT/telegram-to-todo"
+}
