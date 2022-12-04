@@ -5,7 +5,7 @@ This Telegram bot takes whatever message it is sent or forwarded and sends it to
 It requires four parameters through environment variables:
 
 - `TELEGRAM_BOT_TOKEN` (required) is the token obtained from [@Botfather](https://t.me/botfather).
-- `AUTHORIZED_CHAT_IDS` is a comma-separated list of chat IDs allowed to talk to the bot. Get yours through [@chatIDrobot]https://t.me/chatIDrobot).
+- `AUTHORIZED_CHAT_IDS` is a comma-separated list of chat IDs allowed to talk to the bot. Get yours through [@chatIDrobot](https://t.me/chatIDrobot).
 - `TODO_ADDER_AUTH_TOKEN` is the secret authorization code that allows access to `microsoft-todo-adder`
 - `TODO_TASK_ENDPOINT` is the `microsoft-todo-adder` endpoint (it usually ends with `/api/v1/todo`)
 
