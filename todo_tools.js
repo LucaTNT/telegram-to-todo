@@ -1,6 +1,16 @@
 var toDoQueue = {};
+var microsoftToDoAuthToken = '';
+var microsoftToDoTaskEndpoint = '';
 
 module.exports = {
+    setToDoAuthToken: function (token) {
+        microsoftToDoAuthToken = token;
+    },
+
+    setToDoTaskEndpoint: function (endpoint) {
+        microsoftToDoTaskEndpoint = endpoint;
+    },
+
     createToDo: function (msg) {
         var todo = {};
 
@@ -35,11 +45,66 @@ module.exports = {
     },
 
     deleteFromQueue: function (index) {
+        const todo = toDoQueue[index];
         delete toDoQueue[index];
+        return todo;
     },
 
-    addToDo: function (todo_index) {
-        this.deleteFromQueue(todo_index);
+    updateQueueItem: function (index, todo) {
+        toDoQueue[index] = todo;
+    },
+
+    addToDo: async function (todo_index) {
+        todo = this.deleteFromQueue(todo_index);
         console.log("Added to MS ToDo");
+        await sendToMicrosoftToDo(todo["text"], todo["note"]);
     }
   };
+
+async function sendToMicrosoftToDo(title, note) {
+    const https = require('https')
+
+    const task = {
+        title: title,
+        note: note
+    }
+
+    const dataString = JSON.stringify(task)
+    console.log(dataString)
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': microsoftToDoAuthToken
+        },
+        timeout: 5000, // in ms
+    }
+
+    return new Promise((resolve, reject) => {
+        const req = https.request(microsoftToDoTaskEndpoint, options, (res) => {
+        if (res.statusCode < 200 || res.statusCode > 299) {
+            return reject(new Error(`HTTP status code ${res.statusCode}`))
+        }
+
+        const body = []
+        res.on('data', (chunk) => body.push(chunk))
+        res.on('end', () => {
+            const resString = Buffer.concat(body).toString()
+            resolve(resString)
+        })
+        })
+
+        req.on('error', (err) => {
+        reject(err)
+        })
+
+        req.on('timeout', () => {
+        req.destroy()
+        reject(new Error('Request time out'))
+        })
+
+        req.write(dataString)
+        req.end()
+    })
+}
