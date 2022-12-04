@@ -81,7 +81,7 @@ bot.on('message', (msg) => {
     // Ask the user for what to do
     bot.sendMessage(
         msg.chat.id,
-        `<b>Titolo:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Nota:</b> ${telegram_tools.sanitizeHTML(todo.note)}\n\n\n<b>Aggiungo questa voce?</b>`,
+        `<b>Titolo:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Nota:</b> ${telegram_tools.sanitizeHTML(todo.note)}\n\n\n<b>Aggiungo alla scaletta?</b>`,
         opts
     ).then((msg) => {
         // Save todo to the queue
@@ -102,7 +102,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
     switch (action) {
         case 'yes':
             todo_id = (waitingForNewTitle ? waitingForNewTitle : msg.message_id);
-            text = `Added todo ${todo_tools.toDoQueueItem(todo_id)['text']}`;
+            text = `Aggiunto alla scaletta: ${todo_tools.toDoQueueItem(todo_id)['text']}`;
             waitingForNewTitle = false;
             todo_tools.addToDo(todo_id);
             break;
@@ -114,7 +114,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
             break;
     
         default:
-            text = `Ignored message`
+            text = `Messaggio ignorato`
             delete todo_tools.deleteFromQueue(msg.message_id);
             console.log(todo_tools.toDoQueue());
             break;
