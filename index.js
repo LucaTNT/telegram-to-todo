@@ -9,13 +9,10 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
 
 var authorized_chat_ids = []
 if (process.env.AUTHORIZED_CHAT_IDS) {
-    const chatIdRegex = /([0-9]+)/gi;
     let authorized_ids = process.env.AUTHORIZED_CHAT_IDS.split(",");
+
     authorized_ids.forEach((id) => {
-        let chat_id = chatIdRegex.exec(id.trim());
-        if (chat_id) {
-            authorized_chat_ids.push(parseInt(chat_id[1]));
-        }
+        authorized_chat_ids.push(parseInt(id.trim()));
     });
 } else {
     console.log("Missing AUTHORIZED_CHAT_IDS env variable");
