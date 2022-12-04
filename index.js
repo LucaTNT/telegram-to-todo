@@ -22,12 +22,25 @@ if (process.env.AUTHORIZED_CHAT_IDS) {
     process.exit(1);
 }
 
+if (!process.env.TODO_ADDER_AUTH_TOKEN) {
+    console.log("Missing TODO_ADDER_AUTH_TOKEN env variable");
+    process.exit(1);
+}
+
+if (!process.env.TODO_TASK_ENDPOINT) {
+    console.log("Missing TODO_TASK_ENDPOINT env variable");
+    process.exit(1);
+}
+
+todo_tools.setToDoAuthToken(process.env.TODO_ADDER_AUTH_TOKEN);
+todo_tools.setToDoTaskEndpoint(process.env.TODO_TASK_ENDPOINT);
+
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {polling: true});
 
 // If false, we're waiting for a new item to be added to the queue.
 // If not false, it should be the message id corresponding to the
 // todo item in the queue
-var waitingForNewTitle = false
+var waitingForNewTitle = false;
 
 // Listen for messages
 bot.on('message', (msg) => {
@@ -36,23 +49,34 @@ bot.on('message', (msg) => {
     console.info('Message ignored')
     return
   }
-  console.log(msg)
+  console.log(msg);
 
   // If waitingForNewTitle is not false we're waiting for the user to provide the new title for the Todo
   if (waitingForNewTitle) {
-    bot.sendMessage(msg.chat.id, `Vecchio titolo: ${todo_tools.toDoQueueItem(waitingForNewTitle)['text']}\nNuovo titolo:${msg.text}`)
+    var todo_to_update = todo_tools.toDoQueueItem(waitingForNewTitle);
+    bot.sendMessage(msg.chat.id, `Vecchio titolo: ${todo_to_update['text']}\nNuovo titolo:${msg.text}`);
+
+    // Update the todo
+    todo_to_update['note'] = `${todo_to_update['text']}\n\n${todo_to_update['note']}`;
+    todo_to_update['text'] = msg.text;
+    todo_tools.updateQueueItem(waitingForNewTitle, todo_to_update);
+
     todo_tools.addToDo(waitingForNewTitle);
     waitingForNewTitle = false;
+
+    // Make sure we have no messages with dead buttons around.
+    telegram_tools.removeButtons(bot);
+
     return;
   }
 
   // Create a new todo item
-  const todo = todo_tools.createToDo(msg)
+  const todo = todo_tools.createToDo(msg);
   if (todo) {
     const opts = telegram_tools.inlineKeyboardOpts(
         [[['Sì', 'yes'], ['No', 'no']], [['Cambia titolo', 'change_title']]],
         {parse_mode: 'html'}
-    )
+    );
 
     // Ask the user for what to do
     bot.sendMessage(
@@ -63,7 +87,7 @@ bot.on('message', (msg) => {
         // Save todo to the queue
         todo_tools.addToQueue(msg.message_id, todo);
         console.log(todo_tools.toDoQueue())
-    })
+    });
   }
 });
 
@@ -71,10 +95,6 @@ bot.on('message', (msg) => {
 bot.on('callback_query', function onCallbackQuery(callbackQuery) {
     const action = callbackQuery.data;
     const msg = callbackQuery.message;
-    const original_message_opts = {
-      chat_id: msg.chat.id,
-      message_id: msg.message_id,
-    };
 
     let text;
     var opts = {};
@@ -90,7 +110,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
         case 'change_title':
             waitingForNewTitle = msg.message_id;
             text = `Inviami il nuovo titolo, oppure premi "Mantieni titolo attuale"`;
-            opts = opts = telegram_tools.inlineKeyboardOpts([[['Mantieni titolo attuale', 'yes']]])
+            opts = telegram_tools.inlineKeyboardOpts([[['Mantieni titolo attuale', 'yes']]])
             break;
     
         default:
@@ -101,8 +121,11 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
     }
   
     // Remove buttons from original message
-    bot.editMessageText(msg.text, original_message_opts);
+    telegram_tools.addMessageToRemoveButtonsFrom(msg);
+    telegram_tools.removeButtons(bot);
 
     // Reply with what we've done
-    bot.sendMessage(msg.chat.id, text, opts);
+    bot.sendMessage(msg.chat.id, text, opts).then((msg) => {
+        telegram_tools.addMessageToRemoveButtonsFrom(msg);
+    });
   });

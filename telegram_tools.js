@@ -1,3 +1,7 @@
+// Used to store the messages that need their inline keyboard buttons removed.
+// Required when prompting an input while also offering an inline button.
+var messageToRemoveButtonsFrom = [];
+
 module.exports = {
     // Sanitizie the output as required by the html formatter in Telegram messages
     sanitizeHTML: function (string) {
@@ -21,5 +25,22 @@ module.exports = {
         }
 
         return opts;
+    },
+
+    addMessageToRemoveButtonsFrom: function (msg) {
+        messageToRemoveButtonsFrom.push(msg);
+    },
+
+    removeButtons: function (bot) {
+        messageToRemoveButtonsFrom.forEach((msg) => {
+            const original_message_opts = {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id,
+            };
+
+            bot.editMessageText(msg.text, original_message_opts);
+        });
+
+        messageToRemoveButtonsFrom = [];
     }
   };
