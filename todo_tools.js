@@ -56,7 +56,6 @@ module.exports = {
 
     addToDo: async function (todo_index) {
         todo = this.deleteFromQueue(todo_index);
-        console.log("Added to MS ToDo");
         await sendToMicrosoftToDo(todo["text"], todo["note"]);
     }
   };

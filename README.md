@@ -17,6 +17,6 @@ You can either run the app directly through NodeJS
 
 Or you can run it in Docker
 
-    docker run -e TELEGRAM_BOT_TOKEN=your-token -e AUTHORIZED_CHAT_IDS=your-chat-id -e TODO_ADDER_AUTH_TOKEN=your-secret -e TODO_TASK_ENDPOINT=your-endpoint --init cr.casa,kycazirzu,bet/telegram-to-todo
+    docker run -e TELEGRAM_BOT_TOKEN=your-token -e AUTHORIZED_CHAT_IDS=your-chat-id -e TODO_ADDER_AUTH_TOKEN=your-secret -e TODO_TASK_ENDPOINT=your-endpoint --init cr.casa.lucazorzi.net/easypodcast/telegram-to-todo
 
 Note that the `--init` option is highly recommended because it allows you to stop the container through a simple Ctrl+C when running in the foreground. Without it you need to use `docker stop`.
