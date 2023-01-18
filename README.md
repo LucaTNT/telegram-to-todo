@@ -1,4 +1,4 @@
-This Telegram bot takes whatever message it is sent or forwarded and sends it to a `LucaTNT/microsoft-todo-adder` API endpoint to add it to a Microsoft To Do list.
+This Telegram bot takes whatever message it is sent or forwarded and sends it to a [LucaTNT/microsoft-todo-adder](https://github.com/LucaTNT/microsoft-todo-adder) API endpoint to add it to a Microsoft To Do list.
 
 ## Configuration
 
