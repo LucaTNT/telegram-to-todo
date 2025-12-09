@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Telegram bot that receives messages and sends them to LucaTNT/microsoft-todo-adder",
   "main": "./index.js",
-
   "author": "Luca Zorzi <luca@lucazorzi.net>",
   "license": "MIT",
   "engines": {
