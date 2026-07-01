@@ -1,4 +1,4 @@
-const TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('node-telegram-bot-api').default;
 var todo_tools = require('./todo_tools');
 var telegram_tools = require('./telegram_tools');
 
