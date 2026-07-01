@@ -5,7 +5,7 @@ var messageToRemoveButtonsFrom = [];
 module.exports = {
     // Sanitizie the output as required by the html formatter in Telegram messages
     sanitizeHTML: function (string) {
-        return string.replace('<', '&lt;').replace('>', '&gt;').replace('&', '&amp;');
+        return string.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     },
 
     // This allows for more compact code when generating option dictionaries for inline keyboard
