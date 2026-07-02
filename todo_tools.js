@@ -2,6 +2,12 @@ var toDoQueue = {};
 var microsoftToDoAuthToken = '';
 var microsoftToDoTaskEndpoint = '';
 
+// message_id is only unique within a single chat, so the queue key must be
+// namespaced by chat_id to avoid different chats colliding on the same key.
+function queueKey(chatId, todoIndex) {
+    return `${chatId}:${todoIndex}`;
+}
+
 module.exports = {
     setToDoAuthToken: function (token) {
         microsoftToDoAuthToken = token;
@@ -33,30 +39,31 @@ module.exports = {
         return todo;
     },
 
-    addToQueue: function (todo_index, todo) {
-        toDoQueue[todo_index] = todo;
+    addToQueue: function (chatId, todo_index, todo) {
+        toDoQueue[queueKey(chatId, todo_index)] = todo;
     },
 
-    toDoQueueItem: function (index) {
-        return toDoQueue[index];
+    toDoQueueItem: function (chatId, index) {
+        return toDoQueue[queueKey(chatId, index)];
     },
 
     toDoQueue: function () {
         return toDoQueue;
     },
 
-    deleteFromQueue: function (index) {
-        const todo = toDoQueue[index];
-        delete toDoQueue[index];
+    deleteFromQueue: function (chatId, index) {
+        const key = queueKey(chatId, index);
+        const todo = toDoQueue[key];
+        delete toDoQueue[key];
         return todo;
     },
 
-    updateQueueItem: function (index, todo) {
-        toDoQueue[index] = todo;
+    updateQueueItem: function (chatId, index, todo) {
+        toDoQueue[queueKey(chatId, index)] = todo;
     },
 
-    addToDo: async function (todo_index) {
-        todo = this.deleteFromQueue(todo_index);
+    addToDo: async function (chatId, todo_index) {
+        todo = this.deleteFromQueue(chatId, todo_index);
         await sendToMicrosoftToDo(todo["text"], todo["note"]);
     }
   };
