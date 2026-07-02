@@ -6,10 +6,10 @@
   "author": "Luca Zorzi <luca@lucazorzi.net>",
   "license": "MIT",
   "engines": {
-    "node": ">=0.12"
+    "node": ">=18"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^1.1.2"
   },
   "repository": {
     "type": "git",

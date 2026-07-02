@@ -14,9 +14,10 @@ module.exports = {
     createToDo: function (msg) {
         var todo = {};
 
-        // Handle forwared messages
-        if (msg.forward_date) {
-            const original_sender = (msg.forward_sender_name ? msg.forward_sender_name : msg.forward_from.first_name)
+        // Handle forwared messages (Bot API 7.0+ exposes them via forward_origin,
+        // older versions used the now-removed forward_date/forward_from fields)
+        if (msg.forward_origin || msg.forward_date) {
+            const original_sender = forwardedSenderName(msg);
     
             todo['text'] = `#FU: (${original_sender})`;
             todo['note'] = `${msg.text}\n\nInserito da ${msg.chat.first_name}`;
@@ -59,6 +60,29 @@ module.exports = {
         await sendToMicrosoftToDo(todo["text"], todo["note"]);
     }
   };
+
+// Derive the original sender's display name from a forwarded message.
+// Bot API 7.0+ nests this in forward_origin (a MessageOrigin), while older
+// clients used the top-level forward_from / forward_sender_name fields.
+function forwardedSenderName(msg) {
+    const origin = msg.forward_origin;
+
+    if (origin) {
+        switch (origin.type) {
+            case 'user':
+                return origin.sender_user.first_name;
+            case 'hidden_user':
+                return origin.sender_user_name;
+            case 'chat':
+                return origin.sender_chat.title;
+            case 'channel':
+                return origin.chat.title;
+        }
+    }
+
+    // Legacy fields (Bot API < 7.0)
+    return msg.forward_sender_name ? msg.forward_sender_name : msg.forward_from.first_name;
+}
 
 async function sendToMicrosoftToDo(title, note) {
     const https = require('https')
