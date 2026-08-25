@@ -1,5 +1,16 @@
 This Telegram bot takes whatever message it is sent or forwarded and sends it to a [LucaTNT/microsoft-todo-adder](https://github.com/LucaTNT/microsoft-todo-adder) API endpoint to add it to a Microsoft To Do list.
 
+## Images
+
+Messages carrying an image are attached to the todo, using the adder's `image` field. Both compressed
+photos and images sent as files (any `image/*` document) work; other file types are still ignored.
+The caption becomes the todo title, and a picture sent with no caption gets a placeholder title that
+you can replace with "Cambia titolo".
+
+The image is only downloaded from Telegram once you confirm the todo, so declined messages cost
+nothing. Note that this needs an adder that supports attachments — plain-text todos keep working
+against an older one.
+
 ## Configuration
 
 It requires four parameters through environment variables:

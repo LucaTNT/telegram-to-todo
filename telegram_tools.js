@@ -27,6 +27,22 @@ module.exports = {
         return opts;
     },
 
+    // Download a file from Telegram and return it base64-encoded, in the format
+    // expected by the todo adder's `image` field. When the MIME type is known a
+    // full data URI is returned, otherwise the adder sniffs it from the bytes.
+    downloadFileAsBase64: async function (bot, fileId, mimeType) {
+        const link = await bot.getFileLink(fileId);
+        const response = await fetch(link);
+
+        if (!response.ok) {
+            throw new Error(`Telegram returned HTTP ${response.status} while downloading the file`);
+        }
+
+        const base64 = Buffer.from(await response.arrayBuffer()).toString('base64');
+
+        return mimeType ? `data:${mimeType};base64,${base64}` : base64;
+    },
+
     addMessageToRemoveButtonsFrom: function (msg) {
         messageToRemoveButtonsFrom.push(msg);
     },

@@ -34,6 +34,20 @@ todo_tools.setToDoTaskEndpoint(process.env.TODO_TASK_ENDPOINT);
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {polling: true});
 
+// Lets todo_tools fetch an image attachment without knowing about the bot
+todo_tools.setAttachmentDownloader((attachment) => {
+    return telegram_tools.downloadFileAsBase64(bot, attachment.file_id, attachment.mime_type);
+});
+
+// Adding a todo (image download included) happens in the background, so report
+// failures to the chat instead of letting the rejection go unhandled.
+function addToDo(chatId, todoId) {
+    todo_tools.addToDo(chatId, todoId).catch((err) => {
+        console.error(err);
+        bot.sendMessage(chatId, `Errore: non sono riuscito ad aggiungere alla scaletta (${err.message})`);
+    });
+}
+
 // Per-chat: if false, we're waiting for a new item to be added to the queue.
 // If not false, it should be the message id corresponding to the
 // todo item in the queue. Keyed by chat id since message ids are only
@@ -61,7 +75,7 @@ bot.on('message', (msg) => {
     todo_to_update['text'] = msg.text;
     todo_tools.updateQueueItem(chatId, waitingForNewTitle[chatId], todo_to_update);
 
-    todo_tools.addToDo(chatId, waitingForNewTitle[chatId]);
+    addToDo(chatId, waitingForNewTitle[chatId]);
     waitingForNewTitle[chatId] = false;
 
     // Make sure we have no messages with dead buttons around.
@@ -78,10 +92,14 @@ bot.on('message', (msg) => {
         {parse_mode: 'html'}
     );
 
+    const attachment_line = todo.attachment
+        ? `\n\n<b>Allegato:</b> ${telegram_tools.sanitizeHTML(todo.attachment.file_name || 'immagine')}`
+        : '';
+
     // Ask the user for what to do
     bot.sendMessage(
         msg.chat.id,
-        `<b>Titolo:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Nota:</b> ${telegram_tools.sanitizeHTML(todo.note)}\n\n\n<b>Aggiungo alla scaletta?</b>`,
+        `<b>Titolo:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Nota:</b> ${telegram_tools.sanitizeHTML(todo.note)}${attachment_line}\n\n\n<b>Aggiungo alla scaletta?</b>`,
         opts
     ).then((msg) => {
         // Save todo to the queue
@@ -112,7 +130,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
             let todo_id = (waitingForNewTitle[chatId] ? waitingForNewTitle[chatId] : msg.message_id);
             text = `Aggiunto alla scaletta: ${todo_tools.toDoQueueItem(chatId, todo_id)['text']}`;
             waitingForNewTitle[chatId] = false;
-            todo_tools.addToDo(chatId, todo_id);
+            addToDo(chatId, todo_id);
             break;
 
         case 'change_title':
