@@ -54,7 +54,10 @@ module.exports = {
                 message_id: msg.message_id,
             };
 
-            bot.editMessageText(msg.text, original_message_opts);
+            // Ignore errors (e.g. "message is not modified" when the text is
+            // unchanged, or the message having since been deleted) so a stale
+            // button never crashes the process.
+            bot.editMessageText(msg.text, original_message_opts).catch(() => {});
         });
 
         messageToRemoveButtonsFrom = [];
