@@ -1,5 +1,7 @@
 This Telegram bot takes whatever message it is sent or forwarded and sends it to a [LucaTNT/microsoft-todo-adder](https://github.com/LucaTNT/microsoft-todo-adder) API endpoint to add it to a Microsoft To Do list.
 
+Before adding a message to the list, you can edit its title and/or note independently using the "Cambia titolo" / "Cambia nota" buttons — editing one leaves the other untouched. Send `/cancel` at any point while the bot is waiting for a new title or note to abort the edit.
+
 ## Images
 
 Messages carrying an image are attached to the todo, using the adder's `image` field. Both compressed

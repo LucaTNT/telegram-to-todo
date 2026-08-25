@@ -37,14 +37,14 @@ module.exports = {
             const original_sender = forwardedSenderName(msg);
     
             todo['text'] = `#FU: (${original_sender})`;
-            todo['note'] = `${text || ''}\n\nInserito da ${msg.chat.first_name}`;
+            todo['note'] = `${text || ''}\n\nInserito da ${msg.from.first_name}`;
         } else {
             // Ignore empty messages (e.g. attachments we can't do anything with)
             if (!text && !attachment) {
                 return false
             }
             todo['text'] = text || defaultImageTitle(attachment);
-            todo['note'] = `Inserito da ${msg.chat.first_name}`;
+            todo['note'] = `Inserito da ${msg.from.first_name}`;
         }
 
         if (attachment) {

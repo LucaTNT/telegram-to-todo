@@ -48,11 +48,18 @@ function addToDo(chatId, todoId) {
     });
 }
 
-// Per-chat: if false, we're waiting for a new item to be added to the queue.
-// If not false, it should be the message id corresponding to the
-// todo item in the queue. Keyed by chat id since message ids are only
-// unique within a single chat and AUTHORIZED_CHAT_IDS can list several chats.
-var waitingForNewTitle = {};
+// Which field a "change title"/"change note" prompt maps to in the queued todo.
+const EDIT_FIELDS = {
+    title: {key: 'text', label: 'titolo'},
+    note: {key: 'note', label: 'nota'},
+};
+
+// Per-chat: if false, we're not waiting on anything. Otherwise it's
+// {todoId, field}, where todoId is the message id corresponding to the todo
+// item in the queue and field is 'title' or 'note'. Keyed by chat id since
+// message ids are only unique within a single chat and AUTHORIZED_CHAT_IDS
+// can list several chats.
+var pendingEdit = {};
 
 // Listen for messages
 bot.on('message', (msg) => {
@@ -65,18 +72,34 @@ bot.on('message', (msg) => {
 
   const chatId = msg.chat.id;
 
-  // If waitingForNewTitle is not false we're waiting for the user to provide the new title for the Todo
-  if (waitingForNewTitle[chatId]) {
-    var todo_to_update = todo_tools.toDoQueueItem(chatId, waitingForNewTitle[chatId]);
-    bot.sendMessage(msg.chat.id, `Vecchio titolo: ${todo_to_update['text']}\nNuovo titolo:${msg.text}`);
+  if (msg.text == '/cancel') {
+    if (pendingEdit[chatId]) {
+      pendingEdit[chatId] = false;
+      telegram_tools.removeButtons(bot);
+      bot.sendMessage(chatId, 'Modifica annullata.');
+    }
+    return;
+  }
 
-    // Update the todo
-    todo_to_update['note'] = `${todo_to_update['text']}\n\n${todo_to_update['note']}`;
-    todo_to_update['text'] = msg.text;
-    todo_tools.updateQueueItem(chatId, waitingForNewTitle[chatId], todo_to_update);
+  // If pendingEdit is set we're waiting for the user to provide a new title or note for the Todo
+  if (pendingEdit[chatId]) {
+    const {todoId, field} = pendingEdit[chatId];
+    const {key, label} = EDIT_FIELDS[field];
 
-    addToDo(chatId, waitingForNewTitle[chatId]);
-    waitingForNewTitle[chatId] = false;
+    if (!msg.text) {
+      bot.sendMessage(chatId, `Inviami un messaggio di testo con la nuova ${label}, oppure /cancel per annullare.`);
+      return;
+    }
+
+    var todo_to_update = todo_tools.toDoQueueItem(chatId, todoId);
+    bot.sendMessage(msg.chat.id, `Vecchia ${label}: ${todo_to_update[key]}\nNuova ${label}: ${msg.text}`);
+
+    // Update just the edited field, leaving the other one untouched
+    todo_to_update[key] = msg.text;
+    todo_tools.updateQueueItem(chatId, todoId, todo_to_update);
+
+    addToDo(chatId, todoId);
+    pendingEdit[chatId] = false;
 
     // Make sure we have no messages with dead buttons around.
     telegram_tools.removeButtons(bot);
@@ -88,7 +111,7 @@ bot.on('message', (msg) => {
   const todo = todo_tools.createToDo(msg);
   if (todo) {
     const opts = telegram_tools.inlineKeyboardOpts(
-        [[['Sì', 'yes'], ['No', 'no']], [['Cambia titolo', 'change_title']]],
+        [[['Sì', 'yes'], ['No', 'no']], [['Cambia titolo', 'change_title'], ['Cambia nota', 'change_note']]],
         {parse_mode: 'html'}
     );
 
@@ -127,16 +150,22 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
 
     switch (action) {
         case 'yes':
-            let todo_id = (waitingForNewTitle[chatId] ? waitingForNewTitle[chatId] : msg.message_id);
+            let todo_id = (pendingEdit[chatId] ? pendingEdit[chatId].todoId : msg.message_id);
             text = `Aggiunto alla scaletta: ${todo_tools.toDoQueueItem(chatId, todo_id)['text']}`;
-            waitingForNewTitle[chatId] = false;
+            pendingEdit[chatId] = false;
             addToDo(chatId, todo_id);
             break;
 
         case 'change_title':
-            waitingForNewTitle[chatId] = msg.message_id;
+            pendingEdit[chatId] = {todoId: msg.message_id, field: 'title'};
             text = `Inviami il nuovo titolo, oppure premi "Mantieni titolo attuale"`;
             opts = telegram_tools.inlineKeyboardOpts([[['Mantieni titolo attuale', 'yes']]])
+            break;
+
+        case 'change_note':
+            pendingEdit[chatId] = {todoId: msg.message_id, field: 'note'};
+            text = `Inviami la nuova nota, oppure premi "Mantieni nota attuale"`;
+            opts = telegram_tools.inlineKeyboardOpts([[['Mantieni nota attuale', 'yes']]])
             break;
 
         default:
