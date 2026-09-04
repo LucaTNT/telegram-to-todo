@@ -1,6 +1,6 @@
 var toDoQueue = {};
-var microsoftToDoAuthToken = '';
-var microsoftToDoTaskEndpoint = '';
+var toDoAdderAuthToken = '';
+var toDoAdderTaskEndpoint = '';
 var todoAddedWebhook = '';
 // Set by index.js: takes an attachment descriptor and resolves to its base64
 // payload. Injected so this module doesn't need to know about the Telegram bot.
@@ -14,11 +14,11 @@ function queueKey(chatId, todoIndex) {
 
 module.exports = {
     setToDoAuthToken: function (token) {
-        microsoftToDoAuthToken = token;
+        toDoAdderAuthToken = token;
     },
 
     setToDoTaskEndpoint: function (endpoint) {
-        microsoftToDoTaskEndpoint = endpoint;
+        toDoAdderTaskEndpoint = endpoint;
     },
 
     setToDoAddedWebhook: function (url) {
@@ -97,12 +97,12 @@ module.exports = {
             image = await attachmentDownloader(attachment);
         }
 
-        const response = await sendToMicrosoftToDo(todo["text"], todo["note"], image, attachment && attachment.file_name);
+        const response = await sendToAdder(todo["text"], todo["note"], image, attachment && attachment.file_name);
 
         // The todo is already saved at this point, so a webhook failure
         // shouldn't be surfaced as a failure to add it - just log it.
         if (todoAddedWebhook) {
-            // The adder responds with the created Microsoft Graph task, id included.
+            // The adder responds with the created task, id included.
             let taskId = null;
             try {
                 taskId = JSON.parse(response).id;
@@ -209,7 +209,7 @@ async function callToDoAddedWebhook(title, note, taskId) {
     })
 }
 
-async function sendToMicrosoftToDo(title, note, image = null, image_name = null) {
+async function sendToAdder(title, note, image = null, image_name = null) {
     const https = require('https')
 
     const task = {
@@ -234,15 +234,16 @@ async function sendToMicrosoftToDo(title, note, image = null, image_name = null)
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(dataString),
-            'Authorization': microsoftToDoAuthToken
+            'Authorization': toDoAdderAuthToken
         },
-        // Uploading an image costs the adder a round trip to Todoist, so give
-        // those requests a lot more room than a plain text todo needs.
+        // Uploading an image costs the adder a round trip to the underlying
+        // service, so give those requests a lot more room than a plain text
+        // todo needs.
         timeout: image ? 60000 : 5000, // in ms
     }
 
     return new Promise((resolve, reject) => {
-        const req = https.request(microsoftToDoTaskEndpoint, options, (res) => {
+        const req = https.request(toDoAdderTaskEndpoint, options, (res) => {
         if (res.statusCode < 200 || res.statusCode > 299) {
             return reject(new Error(`HTTP status code ${res.statusCode}`))
         }
