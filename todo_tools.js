@@ -1,6 +1,7 @@
 var toDoQueue = {};
 var microsoftToDoAuthToken = '';
 var microsoftToDoTaskEndpoint = '';
+var todoAddedWebhook = '';
 // Set by index.js: takes an attachment descriptor and resolves to its base64
 // payload. Injected so this module doesn't need to know about the Telegram bot.
 var attachmentDownloader = null;
@@ -18,6 +19,10 @@ module.exports = {
 
     setToDoTaskEndpoint: function (endpoint) {
         microsoftToDoTaskEndpoint = endpoint;
+    },
+
+    setToDoAddedWebhook: function (url) {
+        todoAddedWebhook = url;
     },
 
     setAttachmentDownloader: function (downloader) {
@@ -92,7 +97,21 @@ module.exports = {
             image = await attachmentDownloader(attachment);
         }
 
-        await sendToMicrosoftToDo(todo["text"], todo["note"], image, attachment && attachment.file_name);
+        const response = await sendToMicrosoftToDo(todo["text"], todo["note"], image, attachment && attachment.file_name);
+
+        // The todo is already saved at this point, so a webhook failure
+        // shouldn't be surfaced as a failure to add it - just log it.
+        if (todoAddedWebhook) {
+            // The adder responds with the created Microsoft Graph task, id included.
+            let taskId = null;
+            try {
+                taskId = JSON.parse(response).id;
+            } catch (err) {
+                console.error('Failed to parse task id out of the adder response:', err);
+            }
+
+            callToDoAddedWebhook(todo["text"], todo["note"], taskId).catch((err) => console.error('TODO_ADDED_WEBHOOK call failed:', err));
+        }
     }
   };
 
@@ -146,6 +165,46 @@ function forwardedSenderName(msg) {
 
     // Legacy fields (Bot API < 7.0)
     return msg.forward_sender_name ? msg.forward_sender_name : msg.forward_from.first_name;
+}
+
+// Notifies TODO_ADDED_WEBHOOK, if configured, that a todo was saved. Supports
+// both http:// and https:// URLs since this is a user-provided endpoint.
+async function callToDoAddedWebhook(title, note, taskId) {
+    const {request} = todoAddedWebhook.startsWith('http://') ? require('http') : require('https')
+
+    const dataString = JSON.stringify({title, note, task_id: taskId})
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(dataString),
+        },
+        timeout: 5000, // in ms
+    }
+
+    return new Promise((resolve, reject) => {
+        const req = request(todoAddedWebhook, options, (res) => {
+            if (res.statusCode < 200 || res.statusCode > 299) {
+                return reject(new Error(`HTTP status code ${res.statusCode}`))
+            }
+
+            res.resume() // drain the response, we don't need the body
+            res.on('end', resolve)
+        })
+
+        req.on('error', (err) => {
+            reject(err)
+        })
+
+        req.on('timeout', () => {
+            req.destroy()
+            reject(new Error('Request time out'))
+        })
+
+        req.write(dataString)
+        req.end()
+    })
 }
 
 async function sendToMicrosoftToDo(title, note, image = null, image_name = null) {

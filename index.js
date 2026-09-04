@@ -32,6 +32,10 @@ if (!process.env.TODO_TASK_ENDPOINT) {
 todo_tools.setToDoAuthToken(process.env.TODO_ADDER_AUTH_TOKEN);
 todo_tools.setToDoTaskEndpoint(process.env.TODO_TASK_ENDPOINT);
 
+if (process.env.TODO_ADDED_WEBHOOK) {
+    todo_tools.setToDoAddedWebhook(process.env.TODO_ADDED_WEBHOOK);
+}
+
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {polling: true});
 
 // Lets todo_tools fetch an image attachment without knowing about the bot
