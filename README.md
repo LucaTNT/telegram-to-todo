@@ -1,13 +1,13 @@
 This Telegram bot takes whatever message it is sent or forwarded and sends it to an "adder" API endpoint to add it to a to-do list. It works with either [LucaTNT/microsoft-todo-adder](https://github.com/LucaTNT/microsoft-todo-adder) (Microsoft To Do) or [LucaTNT/todoist-adder](https://github.com/LucaTNT/todoist-adder) (Todoist) — only the latter supports image attachments.
 
-Before adding a message to the list, you can edit its title and/or note independently using the "Cambia titolo" / "Cambia nota" buttons — editing one leaves the other untouched. After you send the new value the bot returns to the same confirmation screen (rather than adding it right away), so you can edit the other field too before confirming with "Sì". While waiting for a new title/note you can back out with the "Mantieni ... attuale" button or by sending `/cancel`.
+Before adding a message to the list, you can edit its title and/or note independently using the "Change title" / "Change note" buttons — editing one leaves the other untouched. After you send the new value the bot returns to the same confirmation screen (rather than adding it right away), so you can edit the other field too before confirming with "Yes". While waiting for a new title/note you can back out with the "Keep current ..." button or by sending `/cancel`.
 
 ## Images
 
 Messages carrying an image are attached to the todo, using the adder's `image` field. Both compressed
 photos and images sent as files (any `image/*` document) work; other file types are still ignored.
 The caption becomes the todo title, and a picture sent with no caption gets a placeholder title that
-you can replace with "Cambia titolo".
+you can replace with "Change title".
 
 The image is only downloaded from Telegram once you confirm the todo, so declined messages cost
 nothing. Note that this needs an adder that supports attachments — of the two,

@@ -42,14 +42,14 @@ module.exports = {
             const original_sender = forwardedSenderName(msg);
     
             todo['text'] = `#FU: (${original_sender})`;
-            todo['note'] = `${text || ''}\n\nInserito da ${msg.from.first_name}`;
+            todo['note'] = `${text || ''}\n\nAdded by ${msg.from.first_name}`;
         } else {
             // Ignore empty messages (e.g. attachments we can't do anything with)
             if (!text && !attachment) {
                 return false
             }
             todo['text'] = text || defaultImageTitle(attachment);
-            todo['note'] = `Inserito da ${msg.from.first_name}`;
+            todo['note'] = `Added by ${msg.from.first_name}`;
         }
 
         if (attachment) {
@@ -143,7 +143,7 @@ function imageAttachment(msg) {
 
 // Title for an image that arrived with no caption to name it after.
 function defaultImageTitle(attachment) {
-    return attachment.file_name ? `Immagine: ${attachment.file_name}` : 'Immagine';
+    return attachment.file_name ? `Image: ${attachment.file_name}` : 'Image';
 }
 
 // Derive the original sender's display name from a forwarded message.

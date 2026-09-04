@@ -48,14 +48,14 @@ todo_tools.setAttachmentDownloader((attachment) => {
 function addToDo(chatId, todoId) {
     todo_tools.addToDo(chatId, todoId).catch((err) => {
         console.error(err);
-        bot.sendMessage(chatId, `Errore: non sono riuscito ad aggiungere alla scaletta (${err.message})`);
+        bot.sendMessage(chatId, `Error: failed to add to the todo list (${err.message})`);
     });
 }
 
 // Which field a "change title"/"change note" prompt maps to in the queued todo.
 const EDIT_FIELDS = {
-    title: {key: 'text', label: 'titolo', prompt: 'il nuovo titolo'},
-    note: {key: 'note', label: 'nota', prompt: 'la nuova nota'},
+    title: {key: 'text', label: 'title', prompt: 'the new title'},
+    note: {key: 'note', label: 'note', prompt: 'the new note'},
 };
 
 // Per-chat: if false, we're not waiting on anything. Otherwise it's
@@ -67,20 +67,20 @@ var pendingEdit = {};
 
 function confirmationText(todo) {
     const attachment_line = todo.attachment
-        ? `\n\n<b>Allegato:</b> ${telegram_tools.sanitizeHTML(todo.attachment.file_name || 'immagine')}`
+        ? `\n\n<b>Attachment:</b> ${telegram_tools.sanitizeHTML(todo.attachment.file_name || 'image')}`
         : '';
 
-    return `<b>Titolo:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Nota:</b> ${telegram_tools.sanitizeHTML(todo.note)}${attachment_line}\n\n\n<b>Aggiungo alla scaletta?</b>`;
+    return `<b>Title:</b> ${telegram_tools.sanitizeHTML(todo.text)}\n\n<b>Note:</b> ${telegram_tools.sanitizeHTML(todo.note)}${attachment_line}\n\n\n<b>Add to the todo list?</b>`;
 }
 
 function confirmationOpts() {
     return telegram_tools.inlineKeyboardOpts(
-        [[['Sì', 'yes'], ['No', 'no']], [['Cambia titolo', 'change_title'], ['Cambia nota', 'change_note']]],
+        [[['Yes', 'yes'], ['No', 'no']], [['Change title', 'change_title'], ['Change note', 'change_note']]],
         {parse_mode: 'html'}
     );
 }
 
-// Re-show the Sì/No/Cambia... confirmation for a queued todo, editing the
+// Re-show the Yes/No/Change... confirmation for a queued todo, editing the
 // original confirmation message in place (same message id, so it stays the
 // queue key) rather than sending a new one. Used both right after queuing a
 // new todo and after coming back from a title/note edit, so the user can
@@ -95,7 +95,7 @@ function showConfirmation(chatId, todoId, todo) {
         reply_markup: opts.reply_markup,
     }).catch((err) => {
         console.error(err);
-        bot.sendMessage(chatId, `Errore: non sono riuscito ad aggiornare il messaggio (${err.message})`);
+        bot.sendMessage(chatId, `Error: failed to update the message (${err.message})`);
     });
 }
 
@@ -126,7 +126,7 @@ bot.on('message', (msg) => {
     const {key, label} = EDIT_FIELDS[field];
 
     if (!msg.text) {
-      bot.sendMessage(chatId, `Inviami un messaggio di testo con la nuova ${label}, oppure premi "Mantieni ${label} attuale" qui sopra.`);
+      bot.sendMessage(chatId, `Send me a text message with the new ${label}, or press "Keep current ${label}" above.`);
       return;
     }
 
@@ -136,7 +136,7 @@ bot.on('message', (msg) => {
     todo_tools.updateQueueItem(chatId, todoId, todo_to_update);
     pendingEdit[chatId] = false;
 
-    // Remove the button from the dangling "Inviami il nuovo ..." prompt
+    // Remove the button from the dangling "Send me the new ..." prompt
     telegram_tools.removeButtons(bot);
 
     // Back to the confirmation screen, so the other field can still be edited
@@ -177,7 +177,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
         case 'yes': {
             const todo_id = msg.message_id;
             telegram_tools.removeButtons(bot);
-            bot.sendMessage(chatId, `Aggiunto alla scaletta: ${todo_tools.toDoQueueItem(chatId, todo_id)['text']}`);
+            bot.sendMessage(chatId, `Added to the todo list: ${todo_tools.toDoQueueItem(chatId, todo_id)['text']}`);
             addToDo(chatId, todo_id);
             break;
         }
@@ -189,8 +189,8 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
             pendingEdit[chatId] = {todoId: msg.message_id, field};
             telegram_tools.removeButtons(bot);
 
-            const opts = telegram_tools.inlineKeyboardOpts([[[`Mantieni ${label} attuale`, 'cancel_edit']]]);
-            bot.sendMessage(chatId, `Inviami ${prompt}, oppure premi il pulsante qui sotto per lasciarla invariata.`, opts)
+            const opts = telegram_tools.inlineKeyboardOpts([[[`Keep current ${label}`, 'cancel_edit']]]);
+            bot.sendMessage(chatId, `Send me ${prompt}, or press the button below to leave it unchanged.`, opts)
                 .then((sentMsg) => telegram_tools.addMessageToRemoveButtonsFrom(sentMsg));
             break;
         }
@@ -208,7 +208,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
         default:
             telegram_tools.removeButtons(bot);
             todo_tools.deleteFromQueue(chatId, msg.message_id);
-            bot.sendMessage(chatId, 'Messaggio ignorato');
+            bot.sendMessage(chatId, 'Message ignored');
             console.log(todo_tools.toDoQueue());
             break;
     }
