@@ -22,6 +22,10 @@ It requires four parameters through environment variables:
 - `TODO_ADDER_AUTH_TOKEN` is the secret authorization code that allows access to `microsoft-todo-adder`
 - `TODO_TASK_ENDPOINT` is the `microsoft-todo-adder` endpoint (it usually ends with `/api/v1/todo`)
 
+Optionally, you can also set:
+
+- `TODO_ADDED_WEBHOOK` is a URL that gets called with a `POST` request (JSON body: `{"title": "...", "note": "...", "task_id": "..."}`) after a todo item has been successfully saved. `task_id` is the id of the created Microsoft To Do task, or `null` if it couldn't be determined from the adder's response. If `TODO_ADDED_WEBHOOK` is not set, no webhook is called. A failing webhook call doesn't affect the todo item, which is already saved by that point.
+
 ## Running the app
 
 You can either run the app directly through NodeJS
