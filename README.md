@@ -39,3 +39,9 @@ Or you can run it in Docker
     docker run -e TELEGRAM_BOT_TOKEN=your-token -e AUTHORIZED_CHAT_IDS=your-chat-id -e TODO_ADDER_AUTH_TOKEN=your-secret -e TODO_TASK_ENDPOINT=your-endpoint --init cr.casa.lucazorzi.net/easypodcast/telegram-to-todo
 
 Note that the `--init` option is highly recommended because it allows you to stop the container through a simple Ctrl+C when running in the foreground. Without it you need to use `docker stop`.
+
+## Testing
+
+    npm test
+
+Runs the unit tests (Node's built-in test runner, no extra dependencies) covering `todo_tools.js` and `telegram_tools.js`. Network calls to the adder, the webhook, and Telegram are mocked, so the suite doesn't need any of the environment variables above.
