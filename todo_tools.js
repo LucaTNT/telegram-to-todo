@@ -110,7 +110,9 @@ module.exports = {
                 console.error('Failed to parse task id out of the adder response:', err);
             }
 
-            callToDoAddedWebhook(todo["text"], todo["note"], taskId).catch((err) => console.error('TODO_ADDED_WEBHOOK call failed:', err));
+            callToDoAddedWebhook(todo["text"], todo["note"], taskId)
+                .then(() => console.log('TODO_ADDED_WEBHOOK call succeeded'))
+                .catch((err) => console.error('TODO_ADDED_WEBHOOK call failed:', err));
         }
     }
   };
